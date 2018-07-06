@@ -1,0 +1,5 @@
+package arango
+
+func connect() {
+
+}
