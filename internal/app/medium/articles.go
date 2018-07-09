@@ -6,12 +6,13 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"github.com/besirovic/medium-crawler/arango"
+	"github.com/besirovic/medium-crawler/internal/pkg/arango"
 
 	"github.com/tidwall/gjson"
 )
 
-type mediumArticle struct {
+// MediumArticle represent struct with needed fields from medium article
+type MediumArticle struct {
 	auhtor   string
 	slug     string
 	title    string
@@ -19,10 +20,10 @@ type mediumArticle struct {
 	content  gjson.Result
 }
 
-// getArticle is responsible for sending request to article
+// GetArticle is responsible for sending request to article
 // page and fetching article data in JSON format
 // It receives author username and articleID as strings
-func getArticle(username string, slug string) {
+func GetArticle(username string, slug string) {
 	url := constructMediumArticleURL(username, slug)
 	resp, err := http.Get(url)
 
@@ -50,7 +51,7 @@ func getArticle(username string, slug string) {
 
 	// Getting medium post data
 	postJSON := gjson.GetMany(bodyString, "payload.value.title", "payload.value.content.subtitle", "payload.value.content.bodyModel.paragraphs.#.text")
-	a := mediumArticle{
+	a := MediumArticle{
 		auhtor:   username,
 		slug:     slug,
 		title:    postJSON[0].String(),
@@ -63,7 +64,7 @@ func getArticle(username string, slug string) {
 }
 
 // storeArticle is responsible for saving article document to ArangoDB
-func storeArticle(a mediumArticle) {
+func storeArticle(a MediumArticle) {
 	// Get context and collection
 	ctx := context.Background()
 	coll := arango.GetColl()

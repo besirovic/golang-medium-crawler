@@ -1,4 +1,4 @@
-package utils
+package env
 
 import (
 	"log"
@@ -8,9 +8,9 @@ import (
 	"github.com/joho/godotenv"
 )
 
-// LoadENV is responsible for loading environment variables from
+// Load is responsible for loading environment variables from
 // .env file if it exists in root folder of project
-func LoadENV() {
+func Load() {
 	f := filepath.Join(".", ".env")
 	if _, err := os.Stat(f); os.IsNotExist(err) {
 		return

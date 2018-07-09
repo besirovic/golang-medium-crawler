@@ -7,15 +7,16 @@ import (
 	"github.com/tidwall/gjson"
 )
 
-type slugResponse struct {
-	author string
-	slug   string
+// SlugResponse represent struct with article slug and author username
+type SlugResponse struct {
+	Author string
+	Slug   string
 }
 
-// getAuthorProfile is responsibe for sending request to author profile
+// GetAuthorProfile is responsibe for sending request to author profile
 // page and getting data in JSON format
 // It receives username as a string
-func getAuthorProfile(username string, c chan slugResponse) {
+func GetAuthorProfile(username string, c chan SlugResponse) {
 	url := constructMediumAuthorURL(username)
 	resp, err := http.Get(url)
 	if err != nil {
@@ -41,9 +42,9 @@ func getAuthorProfile(username string, c chan slugResponse) {
 
 	for _, p := range posts {
 		s := gjson.Get(p.String(), "uniqueSlug").String()
-		c <- slugResponse{
-			author: username,
-			slug:   s,
+		c <- SlugResponse{
+			Author: username,
+			Slug:   s,
 		}
 	}
 }
