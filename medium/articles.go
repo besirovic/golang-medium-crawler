@@ -1,11 +1,12 @@
 package medium
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"os"
-	"path/filepath"
+
+	"github.com/besirovic/medium-crawler/arango"
 
 	"github.com/tidwall/gjson"
 )
@@ -31,19 +32,23 @@ func getArticle(username string, slug string) {
 	}
 	defer resp.Body.Close()
 
+	// Check if status code is 200
 	if resp.StatusCode != http.StatusOK {
 		return
 	}
 
+	// Getting response body
 	bodyBytes, err := ioutil.ReadAll(resp.Body)
 	bodyString := string(bodyBytes)[16:]
 
+	// Checking if medium success status is OK
 	success := gjson.Get(bodyString, "success").Bool()
 
 	if success != true {
 		return
 	}
 
+	// Getting medium post data
 	postJSON := gjson.GetMany(bodyString, "payload.value.title", "payload.value.content.subtitle", "payload.value.content.bodyModel.paragraphs.#.text")
 	a := mediumArticle{
 		auhtor:   username,
@@ -53,31 +58,29 @@ func getArticle(username string, slug string) {
 		content:  postJSON[2],
 	}
 
+	// Storing article to ArangoDB
 	storeArticle(a)
 }
 
-func storeArticle(p mediumArticle) {
-	// Store article to ArangoDB
-}
+// storeArticle is responsible for saving article document to ArangoDB
+func storeArticle(a mediumArticle) {
+	// Get context and collection
+	ctx := context.Background()
+	coll := arango.GetColl()
 
-// storeArticleLocal is resonsible for storing article to database
-// It receives authorID and articleData as strings
-func storeArticleLocal(p mediumArticle) {
-	fp := filepath.Join(".", "storage", p.auhtor, p.slug)
-	fn := fp + ".txt"
-	f, err := os.OpenFile(fn, os.O_WRONLY|os.O_TRUNC|os.O_CREATE, 0666)
+	// Convert article struct to map
+	p := make(map[string]interface{})
+	p["title"] = a.title
+	p["subtitle"] = a.subtitle
+	p["author"] = a.auhtor
+	p["slug"] = a.slug
+	p["content"] = a.content.String()
 
-	if err != nil {
-		return
-	}
-
-	defer f.Close()
-
-	f.WriteString("Title:" + p.title)
-	f.WriteString("\n")
-	f.WriteString("Subtitle: " + p.subtitle)
-	f.WriteString("\n")
+	// Save article as document to db
+	coll.CreateDocument(ctx, p)
 }
 
 // Check if article already exists in database
-func checkIfArticleExists(articleID string) {}
+func checkIfArticleExists(articleID string) {
+	// TODO
+}

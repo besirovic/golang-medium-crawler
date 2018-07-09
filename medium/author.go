@@ -3,8 +3,6 @@ package medium
 import (
 	"io/ioutil"
 	"net/http"
-	"os"
-	"path/filepath"
 
 	"github.com/tidwall/gjson"
 )
@@ -18,8 +16,6 @@ type slugResponse struct {
 // page and getting data in JSON format
 // It receives username as a string
 func getAuthorProfile(username string, c chan slugResponse) {
-	createAuthorDir(username)
-
 	url := constructMediumAuthorURL(username)
 	resp, err := http.Get(url)
 	if err != nil {
@@ -49,13 +45,5 @@ func getAuthorProfile(username string, c chan slugResponse) {
 			author: username,
 			slug:   s,
 		}
-	}
-}
-
-func createAuthorDir(u string) {
-	// Check if author's directory exists
-	d := filepath.Join(".", "storage", u)
-	if _, err := os.Stat(d); os.IsNotExist(err) {
-		os.MkdirAll(d, os.ModePerm)
 	}
 }

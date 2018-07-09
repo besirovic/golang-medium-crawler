@@ -8,14 +8,17 @@ import (
 	"github.com/arangodb/go-driver/http"
 )
 
+// Declare arango client, db and collection
 var client driver.Client
 var db driver.Database
 var coll driver.Collection
 
 // Connect function is responsible for connecting app with arango database
 func connect() (driver.Client, error) {
+	// Get ArangoDB credentials
 	arangoHost, arangoUser, arangoPassword := os.Getenv("ARANGO_HOST"), os.Getenv("ARANGO_USERNAME"), os.Getenv("ARANGO_PASSWORD")
 
+	// Connecting to ArangoDB
 	conn, err := http.NewConnection(http.ConnectionConfig{
 		Endpoints: []string{arangoHost},
 	})
@@ -24,6 +27,7 @@ func connect() (driver.Client, error) {
 		return nil, err
 	}
 
+	// Creating new client
 	client, err := driver.NewClient(driver.ClientConfig{
 		Connection:     conn,
 		Authentication: driver.BasicAuthentication(arangoUser, arangoPassword),
@@ -101,6 +105,6 @@ func GetColl() driver.Collection {
 }
 
 // GetSession returns database and collection
-func GetSession() (driver.Database, driver.Collection) {
-	return db, coll
+func GetSession() (driver.Client, driver.Database, driver.Collection) {
+	return client, db, coll
 }
