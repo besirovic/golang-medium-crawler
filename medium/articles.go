@@ -10,7 +10,7 @@ import (
 	"github.com/tidwall/gjson"
 )
 
-type articleResponse struct {
+type mediumArticle struct {
 	auhtor   string
 	slug     string
 	title    string
@@ -45,7 +45,7 @@ func getArticle(username string, slug string) {
 	}
 
 	postJSON := gjson.GetMany(bodyString, "payload.value.title", "payload.value.content.subtitle", "payload.value.content.bodyModel.paragraphs.#.text")
-	a := articleResponse{
+	a := mediumArticle{
 		auhtor:   username,
 		slug:     slug,
 		title:    postJSON[0].String(),
@@ -56,9 +56,13 @@ func getArticle(username string, slug string) {
 	storeArticle(a)
 }
 
-// storeArticle is resonsible for storing article to database
+func storeArticle(p mediumArticle) {
+	// Store article to ArangoDB
+}
+
+// storeArticleLocal is resonsible for storing article to database
 // It receives authorID and articleData as strings
-func storeArticle(p articleResponse) {
+func storeArticleLocal(p mediumArticle) {
 	fp := filepath.Join(".", "storage", p.auhtor, p.slug)
 	fn := fp + ".txt"
 	f, err := os.OpenFile(fn, os.O_WRONLY|os.O_TRUNC|os.O_CREATE, 0666)

@@ -10,3 +10,10 @@
 
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
+
+# ENV files
+.env
+.env.dev
+
+# Project folders to ignoe
+storage
