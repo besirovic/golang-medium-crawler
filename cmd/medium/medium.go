@@ -2,6 +2,7 @@ package main
 
 import (
 	"os"
+	"sync"
 
 	"github.com/besirovic/medium-crawler/internal/app/medium"
 	"github.com/besirovic/medium-crawler/internal/pkg/arango"
@@ -9,7 +10,6 @@ import (
 )
 
 func main() {
-
 	// Load ENV variables for development
 	env.Load()
 
@@ -30,12 +30,20 @@ func main() {
 		"JoubranJad",
 	}
 
-	slugC := make(chan medium.SlugResponse)
+	slugsResponseC := make(chan medium.SlugsResponse)
+	var wg sync.WaitGroup
+
 	for _, a := range authors {
-		go medium.GetAuthorProfile(a, slugC)
+		go medium.GetAuthorProfile(a, slugsResponseC)
 	}
 
-	for s := range slugC {
-		go medium.GetArticle(s.Author, s.Slug)
+	for range authors {
+		r := <-slugsResponseC
+		wg.Add(len(r.Slugs))
+		for _, s := range r.Slugs {
+			go medium.GetArticle(r.Author, s, &wg)
+		}
 	}
+
+	wg.Wait()
 }

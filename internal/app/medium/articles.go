@@ -5,14 +5,15 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"sync"
 
 	"github.com/besirovic/medium-crawler/internal/pkg/arango"
 
 	"github.com/tidwall/gjson"
 )
 
-// MediumArticle represent struct with needed fields from medium article
-type MediumArticle struct {
+// Article represent struct with needed fields from medium article
+type Article struct {
 	auhtor   string
 	slug     string
 	title    string
@@ -23,7 +24,7 @@ type MediumArticle struct {
 // GetArticle is responsible for sending request to article
 // page and fetching article data in JSON format
 // It receives author username and articleID as strings
-func GetArticle(username string, slug string) {
+func GetArticle(username string, slug string, wg *sync.WaitGroup) {
 	url := constructMediumArticleURL(username, slug)
 	resp, err := http.Get(url)
 
@@ -51,7 +52,7 @@ func GetArticle(username string, slug string) {
 
 	// Getting medium post data
 	postJSON := gjson.GetMany(bodyString, "payload.value.title", "payload.value.content.subtitle", "payload.value.content.bodyModel.paragraphs.#.text")
-	a := MediumArticle{
+	a := Article{
 		auhtor:   username,
 		slug:     slug,
 		title:    postJSON[0].String(),
@@ -61,16 +62,18 @@ func GetArticle(username string, slug string) {
 
 	// Storing article to ArangoDB
 	storeArticle(a)
+	wg.Done()
 }
 
 // storeArticle is responsible for saving article document to ArangoDB
-func storeArticle(a MediumArticle) {
+func storeArticle(a Article) {
 	// Get context and collection
 	ctx := context.Background()
 	coll := arango.GetColl()
 
-	// Convert article struct to map
 	p := make(map[string]interface{})
+
+	// Convert article struct to map
 	p["title"] = a.title
 	p["subtitle"] = a.subtitle
 	p["author"] = a.auhtor
