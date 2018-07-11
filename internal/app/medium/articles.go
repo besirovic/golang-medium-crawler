@@ -14,11 +14,11 @@ import (
 
 // Article represent struct with needed fields from medium article
 type Article struct {
-	auhtor   string
+	author   string
 	slug     string
 	title    string
 	subtitle string
-	content  gjson.Result
+	content  string
 }
 
 // GetArticle is responsible for sending request to article
@@ -53,11 +53,11 @@ func GetArticle(username string, slug string, wg *sync.WaitGroup) {
 	// Getting medium post data
 	postJSON := gjson.GetMany(bodyString, "payload.value.title", "payload.value.content.subtitle", "payload.value.content.bodyModel.paragraphs.#.text")
 	a := Article{
-		auhtor:   username,
+		author:   username,
 		slug:     slug,
 		title:    postJSON[0].String(),
 		subtitle: postJSON[1].String(),
-		content:  postJSON[2],
+		content:  postJSON[2].String(),
 	}
 
 	// Storing article to ArangoDB
@@ -66,7 +66,7 @@ func GetArticle(username string, slug string, wg *sync.WaitGroup) {
 }
 
 // storeArticle is responsible for saving article document to ArangoDB
-func storeArticle(a Article) {
+func storeArticle(a Article) error {
 	// Get context and collection
 	ctx := context.Background()
 	coll := *arango.GetColl()
@@ -76,12 +76,18 @@ func storeArticle(a Article) {
 	// Convert article struct to map
 	p["title"] = a.title
 	p["subtitle"] = a.subtitle
-	p["author"] = a.auhtor
+	p["author"] = a.author
 	p["slug"] = a.slug
-	p["content"] = a.content.String()
+	p["content"] = a.content
 
 	// Save article as document to db
-	coll.CreateDocument(ctx, p)
+	_, err := coll.CreateDocument(ctx, p)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // Check if article already exists in database
