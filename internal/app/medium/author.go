@@ -11,20 +11,31 @@ import (
 type SlugsResponse struct {
 	Author string
 	Slugs  []string
+	err    bool
 }
 
 // GetAuthorProfile is responsibe for sending request to author profile
 // page and getting data in JSON format
 // It receives username as a string
 func GetAuthorProfile(username string, c chan SlugsResponse) {
+	r := SlugsResponse{
+		Author: username,
+		Slugs:  []string{},
+		err:    false,
+	}
+
 	url := constructMediumAuthorURL(username)
 	resp, err := http.Get(url)
 	if err != nil {
+		r.err = true
+		c <- r
 		return
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
+		r.err = true
+		c <- r
 		return
 	}
 
@@ -34,16 +45,13 @@ func GetAuthorProfile(username string, c chan SlugsResponse) {
 	success := gjson.Get(bodyString, "success").Bool()
 
 	if success != true {
+		r.err = true
+		c <- r
 		return
 	}
 
 	// user := gjson.GetMany(bodyString, "payload.user.username")
 	posts := gjson.Get(bodyString, "payload.references.Post").Map()
-
-	r := SlugsResponse{
-		Author: username,
-		Slugs:  []string{},
-	}
 
 	for _, p := range posts {
 		s := gjson.Get(p.String(), "uniqueSlug").String()
