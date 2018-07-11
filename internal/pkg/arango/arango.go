@@ -100,11 +100,11 @@ func GetDB() *driver.Database {
 }
 
 // GetColl returns collection of medium articles
-func GetColl() driver.Collection {
-	return coll
+func GetColl() *driver.Collection {
+	return &coll
 }
 
 // GetSession returns database and collection
-func GetSession() (driver.Client, driver.Database, driver.Collection) {
-	return client, db, coll
+func GetSession() (*driver.Client, *driver.Database, *driver.Collection) {
+	return &client, &db, &coll
 }
