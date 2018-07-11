@@ -6,12 +6,12 @@ import (
 
 	"github.com/besirovic/medium-crawler/internal/app/medium"
 	"github.com/besirovic/medium-crawler/internal/pkg/arango"
-	"github.com/besirovic/medium-crawler/internal/pkg/env"
+	"github.com/besirovic/medium-crawler/pkg/env"
 )
 
 func main() {
 	// Load ENV variables for development
-	env.Load()
+	env.Load(".env")
 
 	// Setting up arangoDB connection
 	_, _, err := arango.Bootstrap()
