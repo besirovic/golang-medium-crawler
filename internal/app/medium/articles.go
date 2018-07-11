@@ -69,7 +69,7 @@ func GetArticle(username string, slug string, wg *sync.WaitGroup) {
 func storeArticle(a Article) {
 	// Get context and collection
 	ctx := context.Background()
-	coll := arango.GetColl()
+	coll := *arango.GetColl()
 
 	p := make(map[string]interface{})
 
